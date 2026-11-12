@@ -1,0 +1,24 @@
+# macOS
+.DS_Store
+
+# Claude Code per-user settings
+.claude/settings.local.json
+
+# Credentials and secrets: never commit
+.env
+.env.*
+*.pem
+*.key
+*.p12
+application_default_credentials.json
+client_secret*.json
+*credentials*.json
+*service-account*.json
+token*.json
+
+# Python / tooling scratch
+__pycache__/
+.venv/
+
+# Reports live in a separate private repo (samthebrand/ga4-analyst-reports)
+reports/
