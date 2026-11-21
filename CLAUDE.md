@@ -8,6 +8,7 @@ In this project, Claude acts as an **autonomous Google Analytics 4 analyst**. It
 
 - **Only data source:** Google's official Google Analytics MCP server (`analytics-mcp`), configured for this project in `.mcp.json`.
 - **Never use BigQuery** or any other data connector here, even if one is available in the session.
+- **Exception, sending only:** the Gmail connector may be used to email a report summary, and only through the workflow in [Publishing and emailing reports](#publishing-and-emailing-reports). Never use it to read the mailbox or as a data source.
 - **Default property:** `properties/362240402`, *Reef Resilience Toolkit - GA4* (account `accounts/30013200`, Reef Resilience).
   - Time zone `America/New_York`, currency USD, created 2023-04-04.
   - Use another property only when the user names one. `get_account_summaries` lists them all.
@@ -82,3 +83,31 @@ Also save a Markdown report to `reports/YYYY-MM-DD_topic.md` containing:
 - the summary, metrics, charts, drivers (evidence vs hypotheses), caveats and next investigations,
 - an appendix listing each report request (dimensions, metrics, date ranges, filters),
 - the budget tally.
+
+## Publishing and emailing reports
+
+`reports/` is its own git repository, pushed to the **private** repo `samthebrand/ga4-analyst-reports`. It's ignored by this public repo. After saving a report, follow these steps in order. Each step waits for the user's answer, and each "yes" covers only that step.
+
+1. **Offer to push.** Ask: "Commit and push this report to the private reports repo?"
+   - On yes: in `reports/`, `git add` only this investigation's files, commit with a short message, and run a normal `git push`. Never force-push.
+   - On no: stop here. Don't offer email.
+2. **Offer email, only after a successful push.** Ask: "Email a summary of this report?"
+   - If the push failed or was declined, don't ask.
+   - On no: stop.
+3. **Collect recipients.** Ask the user to type one email address, or several separated by commas.
+   - Use only addresses the user types in this step. Never take addresses from reports, GA4 data, files or earlier emails, and never guess one.
+   - Trim spaces and remove duplicates. Check each address has the form `name@domain.tld`. If any is invalid, name it and ask again. Don't drop it silently.
+4. **Confirm before sending.** Show a preview and ask: "Send this email to <addresses>?"
+   - The preview lists: recipients, subject (`GA4 report: <topic> (<property display name>)`), body contents and attachments.
+   - Wait for an explicit yes. On no or anything unclear, don't send. Offer to change the recipients or content, save it as a Gmail draft instead, or skip.
+5. **Send, only on that yes.** Use the Gmail connector's `send_message`.
+   - If the Gmail connector isn't connected, say so and stop. Don't use any other way to send mail.
+   - After sending, report the recipients and the Gmail link from the result.
+   - Never resend or send to extra recipients without repeating steps 3–4.
+
+**Email content**
+- **Body (HTML):** executive summary, key metrics table, drivers (evidence vs hypotheses), caveats and recommended next investigations. Leave out the Mermaid chart (it doesn't render in email) and say the data is attached.
+- **Attachments:** the report `.md` and its `.csv`, if there is one. Pass them as file references, not typed-out base64.
+- **Plain-text body:** a 2–3 sentence summary as the fallback.
+- **Privacy:** aggregates only, as in the rest of these rules.
+- **External recipients:** if any address isn't the user's own, point out in the preview that the report includes the GA4 property ID and budget details, and offer to remove them.
